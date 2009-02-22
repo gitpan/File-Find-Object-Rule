@@ -5,16 +5,21 @@ WriteMakefile
           'NAME' => 'File::Find::Object::Rule',
           'VERSION_FROM' => 'lib/File/Find/Object/Rule.pm',
           'PREREQ_PM' => {
+                           'Carp' => 0,
                            'Cwd' => 0,
-                           'File::Find' => 0,
+                           'File::Basename' => 0,
+                           'File::Find::Object' => '0.1.9',
                            'File::Spec' => 0,
                            'Number::Compare' => 0,
                            'Test::More' => 0,
-                           'Text::Glob' => 0
+                           'Text::Glob' => 0,
+                           'strict' => 0,
+                           'vars' => 0,
+                           'warnings' => 0
                          },
           'INSTALLDIRS' => 'site',
           'EXE_FILES' => [
-                           'findrule'
+                           'scripts/findorule'
                          ]
         )
 ;

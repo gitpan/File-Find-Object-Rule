@@ -77,15 +77,15 @@ __END__
 
 =head1 NAME
 
-findrule - command line wrapper to File::Find::Object::Rule
+findorule - command line wrapper to File::Find::Object::Rule
 
 =head1 USAGE
 
-  findrule [path...] [expression]
+  findorule [path...] [expression]
 
 =head1 DESCRIPTION
 
-C<findrule> mostly borrows the interface from GNU find(1) to provide a
+C<findorule> mostly borrows the interface from GNU find(1) to provide a
 command-line interface onto the File::Find::Object::Rule heirarchy of modules.
 
 The syntax for expressions is the rule name, preceded by a dash,
@@ -117,12 +117,15 @@ and prepend - to the commands that you want.
 
 =head2 Extra bonus switches
 
-findrule automatically loads all of your installed File::Find::Object::Rule::*
+findorule automatically loads all of your installed File::Find::Object::Rule::*
 extension modules, so check the documentation to see what those would be.
 
 =head1 AUTHOR
 
 Richard Clamp <richardc@unixbeard.net> from a suggestion by Tatsuhiko Miyagawa
+
+Adapted to L<File::Find::Object::Rule> by Shlomi Fish (all copyrights
+disclaimed).
 
 =head1 COPYRIGHT
 

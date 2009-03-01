@@ -1,6 +1,6 @@
 ---
 name: File-Find-Object-Rule
-version: 0.0101
+version: 0.0200
 author:
   - |-
     Richard Clamp <richardc@unixbeard.net> with input gained from this
@@ -28,8 +28,8 @@ build_requires:
 provides:
   File::Find::Object::Rule:
     file: lib/File/Find/Object/Rule.pm
-    version: 0.0101
-generated_by: Module::Build version 0.31
+    version: 0.0200
+generated_by: Module::Build version 0.32
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

@@ -14,7 +14,20 @@ use File::Find::Object; # we're only wrapping for now
 use File::Basename;
 use Cwd;           # 5.00503s File::Find goes screwy with max_depth == 0
 
-$VERSION = '0.0200';
+$VERSION = '0.0300';
+
+use Class::XSAccessor
+    accessors => {
+        "extras" => "extras",
+        "finder" => "finder",
+        "_match_cb" => "_match_cb",
+        "rules" => "rules",
+        "_relative" => "_relative",
+        "_subs" => "_subs",
+        "_maxdepth" => "_maxdepth",
+        "_mindepth" => "_mindepth",
+    }
+    ;
 
 # we'd just inherit from Exporter, but I want the colon
 sub import {
@@ -88,7 +101,7 @@ sub find {
         }
         if ($not) {
             $not = 0;
-            @args = $object->new->$method(@args);
+            @args = ref($object)->new->$method(@args);
             $method = "not";
         }
 
@@ -112,27 +125,42 @@ object if called as class methods.
 =cut
 
 sub new {
+    # We need this to maintain compatibility with File-Find-Object.
+    # However, Randal Schwartz recommends against this practice in general:
+    # http://www.stonehenge.com/merlyn/UnixReview/col52.html
     my $referent = shift;
     my $class = ref $referent || $referent;
+
+    return 
     bless {
         rules    => [],  # [0]
-        subs     => [],  # [1]
+        _subs     => [],  # [1]
         iterator => [],
         extras   => {},
-        maxdepth => undef,
-        mindepth => undef,
-        relative => 0,
+        _maxdepth => undef,
+        _mindepth => undef,
+        _relative => 0,
     }, $class;
 }
 
 sub _force_object {
     my $object = shift;
-    $object = $object->new()
-      unless ref $object;
-    $object;
+    if (! ref($object))
+    {
+        $object = $object->new();
+    }
+    return $object;
 }
 
 =back
+
+=head2 finder
+
+The L<File::Find::Object> finder instance itself.
+
+=head2 my @rules = @{$ffor->rules()};
+
+The rules to match against. For internal use only.
 
 =head2 Matching Rules
 
@@ -158,15 +186,26 @@ sub _flatten {
     return @flat;
 }
 
+sub _add_rule {
+    my $self = shift;
+    my $new_rule = shift;
+
+    push @{$self->rules()}, $new_rule;
+
+    return;
+}
+
 sub name {
     my $self = _force_object shift;
     my @names = map { ref $_ eq "Regexp" ? $_ : glob_to_regex $_ } _flatten( @_ );
 
-    push @{ $self->{rules} }, {
-        rule => 'name',
-        code => join( ' || ', map { "m($_)" } @names ),
-        args => \@_,
-    };
+    $self->_add_rule(
+        {
+            rule => 'name',
+            code => join( ' || ', map { "m($_)" } @names ),
+            args => \@_,
+        }
+    );
 
     $self;
 }
@@ -229,10 +268,10 @@ use vars qw( %X_tests );
 for my $test (keys %X_tests) {
     my $sub = eval 'sub () {
         my $self = _force_object shift;
-        push @{ $self->{rules} }, {
+        $self->_add_rule({
             code => "' . $test . ' \$path",
             rule => "'.$X_tests{$test}.'",
-        };
+        });
         $self;
     } ';
     no strict 'refs';
@@ -270,12 +309,12 @@ use vars qw( @stat_tests );
 
             my @tests = map { Number::Compare->parse_to_perl($_) } @_;
 
-            push @{ $self->{rules} }, {
+            $self->_add_rule({
                 rule => $test,
                 args => \@_,
                 code => 'do { my $val = (stat $path)['.$index.'] || 0;'.
                   join ('||', map { "(\$val $_)" } @tests ).' }',
-            };
+            });
             $self;
         };
         no strict 'refs';
@@ -303,13 +342,13 @@ sub any {
     my $self = _force_object shift;
     my @rulesets = @_;
 
-    push @{ $self->{rules} }, {
+    $self->_add_rule({
         rule => 'any',
         code => '(' . join( ' || ', map {
-            "( " . $_->_compile( $self->{subs} ) . " )"
+            "( " . $_->_compile($self->_subs()) . " )"
         } @_ ) . ")",
         args => \@_,
-    };
+    });
     $self;
 }
 
@@ -332,13 +371,13 @@ sub not {
     my $self = _force_object shift;
     my @rulesets = @_;
 
-    push @{ $self->{rules} }, {
+    $self->_add_rule({
         rule => 'not',
         args => \@rulesets,
         code => '(' . join ( ' && ', map {
-            "!(". $_->_compile( $self->{subs} ) . ")"
+            "!(". $_->_compile($self->_subs()) . ")"
         } @_ ) . ")",
-    };
+    });
     $self;
 }
 
@@ -353,12 +392,14 @@ Traverse no further.  This rule always matches.
 sub prune () {
     my $self = _force_object shift;
 
-    push @{ $self->{rules} },
-      {
-       rule => 'prune',
-       code => 'do { $self->finder->prune(); 1 }'
-      };
-    $self;
+    $self->_add_rule(
+        {
+            rule => 'prune',
+            code => 'do { $self->finder->prune(); 1 }'
+        },
+    );
+
+    return $self;
 }
 
 =item C<discard>
@@ -370,11 +411,12 @@ Don't keep this file.  This rule always matches.
 sub discard () {
     my $self = _force_object shift;
 
-    push @{ $self->{rules} }, {
+    $self->_add_rule({
         rule => 'discard',
         code => '$discarded = 1',
-    };
-    $self;
+    });
+
+    return $self;
 }
 
 =item C<exec( \&subroutine( $shortname, $path, $fullname ) )>
@@ -394,11 +436,14 @@ sub exec {
     my $self = _force_object shift;
     my $code = shift;
 
-    push @{ $self->{rules} }, {
-        rule => 'exec',
-        code => $code,
-    };
-    $self;
+    $self->_add_rule(
+        {
+            rule => 'exec',
+            code => $code,
+        }
+    );
+
+    return $self;
 }
 
 =item ->grep( @specifiers );
@@ -475,16 +520,17 @@ used.
 
 =cut
 
-for my $setter (qw( maxdepth mindepth extras )) {
-    my $sub = sub {
-        my $self = _force_object shift;
-        $self->{$setter} = shift;
-        $self;
-    };
-    no strict 'refs';
-    *$setter = $sub;
+sub maxdepth {
+    my $self = _force_object shift;
+    $self->_maxdepth(shift);
+    return $self;
 }
 
+sub mindepth {
+    my $self = _force_object shift;
+    $self->_mindepth(shift);
+    return $self;
+}
 
 =item C<relative>
 
@@ -494,8 +540,9 @@ Trim the leading portion of any path found
 
 sub relative () {
     my $self = _force_object shift;
-    $self->{relative} = 1;
-    $self;
+    $self->_relative(1);
+
+    return $self;
 }
 
 =item C<not_*>
@@ -540,20 +587,80 @@ directories.
 =cut
 
 
+sub _call_find {
+    my $self = shift;
+    my $paths = shift;
+
+    my $finder = File::Find::Object->new( $self->extras(), @$paths);
+
+    $self->finder($finder);
+
+    return;
+}
+
+sub _compile {
+    my $self = shift;
+    my $subs = shift;
+
+    return '1' unless @{ $self->rules() };
+
+    my $code = join " && ", map {
+        if (ref $_->{code}) {
+            push @$subs, $_->{code};
+            "\$subs->[$#{$subs}]->(\@args) # $_->{rule}\n";
+        }
+        else {
+            "( $_->{code} ) # $_->{rule}\n";
+        }
+    } @{ $self->rules() };
+
+    return $code;
+}
+
 sub in {
     my $self = _force_object shift;
+    my @paths = @_;
 
-    my @found;
-    my $fragment = $self->_compile( $self->{subs} );
-    my @subs = @{ $self->{subs} };
+    $self->start(@paths);
+
+    my @results;
+
+    while (defined(my $match = $self->match()))
+    {
+        push @results, $match;
+    }
+
+    return @results;
+}
+
+=item C<start( @directories )>
+
+Starts a find across the specified directories.  Matching items may
+then be queried using L</match>.  This allows you to use a rule as an
+iterator.
+
+ my $rule = File::Find::Object::Rule->file->name("*.jpeg")->start( "/web" );
+ while ( my $image = $rule->match ) {
+     ...
+ }
+
+=cut
+
+
+sub start {
+    my $self = _force_object shift;
+    my @paths = @_;
+
+    my $fragment = $self->_compile($self->_subs());
+
+    my $subs = $self->_subs();
 
     warn "relative mode handed multiple paths - that's a bit silly\n"
-      if $self->{relative} && @_ > 1;
+      if $self->_relative() && @paths > 1;
 
-    my $topdir;
     my $code = 'sub {
+        my $path_obj = shift;
         my $path = shift;
-        my $path_obj = $self->finder->item_obj();
         
         if (!defined($path_obj))
         {
@@ -565,9 +672,8 @@ sub in {
         my $path_base = fileparse($path);
         my @args = ($path_base, $path_dir, $path);
         local $_ = $path_base;
-        my $maxdepth = $self->{maxdepth};
-        my $mindepth = $self->{mindepth};
-        my $relative = $self->{relative};
+        my $maxdepth = $self->_maxdepth;
+        my $mindepth = $self->_mindepth;
 
         my $comps = $path_obj->full_components();
 
@@ -584,112 +690,21 @@ sub in {
         my $discarded;
         return unless ' . $fragment . ';
         return if $discarded;
-        if ($relative) {
-            if (@$comps)
-            {
-                push @found, 
-                    ($path_obj->is_dir()
-                        ? File::Spec->catdir(@$comps)
-                        : File::Spec->catfile(@$comps)
-                    )
-                    ;
-            }
-        }
-        else {
-            push @found, $path;
-        }
+        return $path;
     }';
 
     #use Data::Dumper;
     #print Dumper \@subs;
     #warn "Compiled sub: '$code'\n";
 
-    my $sub = eval "$code" or die "compile error '$code' $@";
-    my $cwd = getcwd;
-    for my $path (@_) {
-        # $topdir is used for relative and maxdepth
-        $topdir = $path;
-        # slice off the trailing slash if there is one (the
-        # maxdepth/mindepth code is fussy)
-        $topdir =~ s{/?$}{}
-          unless $topdir eq '/';
-        $self->_call_find( { %{ $self->{extras} }, callback => $sub }, $path );
-    }
-    chdir $cwd;
+    my $callback = eval "$code" or die "compile error '$code' $@";
 
-    return @found;
+    $self->_match_cb($callback);
+    $self->_call_find(\@paths);
+
+    return 1;
 }
 
-sub _call_find {
-    my $self = shift;
-    my $params = shift;
-    my @paths = @_;
-
-    my $finder = File::Find::Object->new( $params, @paths);
-
-    $self->{finder} = $finder;
-
-    while(defined(my $next = $finder->next()))
-    {
-        # Do nothing - the callback is invoked.
-
-        if (defined($params->{'preprocess'}) && $finder->item_obj->is_dir())
-        {
-            $finder->set_traverse_to(
-                $params->{'preprocess'}->(
-                        $self, 
-                        [ @{$finder->get_current_node_files_list()} ]
-                )
-            );
-        }
-    }
-
-    return;
-}
-
-sub finder {
-    my $self = shift;
-
-    return $self->{finder};
-}
-
-sub _compile {
-    my $self = shift;
-    my $subs = shift; # [1]
-
-    return '1' unless @{ $self->{rules} };
-    my $code = join " && ", map {
-        if (ref $_->{code}) {
-            push @$subs, $_->{code};
-            "\$subs[$#{$subs}]->(\@args) # $_->{rule}\n";
-        }
-        else {
-            "( $_->{code} ) # $_->{rule}\n";
-        }
-    } @{ $self->{rules} };
-
-    return $code;
-}
-
-=item C<start( @directories )>
-
-Starts a find across the specified directories.  Matching items may
-then be queried using L</match>.  This allows you to use a rule as an
-iterator.
-
- my $rule = File::Find::Object::Rule->file->name("*.jpeg")->start( "/web" );
- while ( my $image = $rule->match ) {
-     ...
- }
-
-=cut
-
-sub start {
-    my $self = _force_object shift;
-
-    $self->{iterator} = [ $self->in( @_ ) ];
-    $self;
-}
 
 =item C<match>
 
@@ -700,7 +715,47 @@ Returns the next file which matches, false if there are no more.
 sub match {
     my $self = _force_object shift;
 
-    return shift @{ $self->{iterator} };
+    my $finder = $self->finder();
+
+    my $match_cb = $self->_match_cb();
+    my $preproc_cb = $self->extras()->{'preprocess'};
+
+    while(defined(my $next_obj = $finder->next_obj()))
+    {
+        if (defined($preproc_cb) && $next_obj->is_dir())
+        {
+            $finder->set_traverse_to(
+                $preproc_cb->(
+                        $self, 
+                        [ @{$finder->get_current_node_files_list()} ]
+                )
+            );
+        }
+
+        if (defined(my $path = $match_cb->($next_obj, $next_obj->path())))
+        {
+            if ($self->_relative)
+            {
+                my $comps = $next_obj->full_components();
+                if (@$comps)
+                {
+                    return
+                        ($next_obj->is_dir()
+                        ? File::Spec->catdir(@$comps)
+                        : File::Spec->catfile(@$comps)
+                        )
+                    ;
+                }
+            }
+            else
+            {
+                return $path;
+            }
+        }
+
+    }
+
+    return;
 }
 
 1;
@@ -772,7 +827,173 @@ documented in L<File::Find::Object::Rule::Procedural>
 
 =head1 EXPORTS
 
-L</find>, L</rule>
+=head2 find
+
+=head2 rule
+
+=head1 Tests
+
+=head2 accessed
+
+Corresponds to C<-A>.
+
+=head2 ascii
+
+Corresponds to C<-T>.
+
+=head2 atime
+
+See "stat tests".
+
+=head2 binary
+
+Corresponds to C<-b>.
+
+=head2 blksize
+
+See "stat tests".
+
+=head2 block
+
+Corresponds to C<-b>.
+
+=head2 blocks
+
+See "stat tests".
+
+=head2 changed
+
+Corresponds to C<-C>.
+
+=head2 character
+
+Corresponds to C<-c>.
+
+=head2 ctime
+
+See "stat tests".
+
+=head2 dev
+
+See "stat tests".
+
+=head2 directory
+
+Corresponds to C<-d>.
+
+=head2 empty
+
+Corresponds to C<-z>.
+
+=head2 executable
+
+Corresponds to C<-x>.
+
+=head2 exists
+
+Corresponds to C<-e>.
+
+=head2 fifo
+
+Corresponds to C<-p>.
+
+=head2 file
+
+Corresponds to C<-f>.
+
+=head2 gid
+
+See "stat tests".
+
+=head2 ino
+
+See "stat tests".
+
+=head2 mode
+
+See "stat tests".
+
+=head2 modified
+
+Corresponds to C<-M>.
+
+=head2 mtime
+
+See "stat tests".
+
+=head2 nlink
+
+See "stat tests".
+
+=head2 r_executable
+
+Corresponds to C<-X>.
+
+=head2 r_owned
+
+Corresponds to C<-O>.
+
+=head2 nonempty
+
+A predicate that determines if the file is empty. Uses C<-s>.
+
+=head2 owned
+
+Corresponds to C<-o>.
+
+=head2 r_readable
+
+Corresponds to C<-R>.
+
+=head2 r_writeable
+
+=head2 r_writable
+
+Corresponds to C<-W>.
+
+=head2 rdev
+
+See "stat tests".
+
+=head2 readable
+
+Corresponds to C<-r>.
+
+=head2 setgid
+
+Corresponds to C<-g>.
+
+=head2 setuid
+
+Corresponds to C<-u>.
+
+=head2 size
+
+See stat tests.
+
+=head2 socket
+
+Corresponds to C<-S>.
+
+=head2 sticky
+
+Corresponds to C<-k>.
+
+=head2 symlink
+
+Corresponds to C<-l>.
+
+=head2 uid 
+
+See "stat tests".
+
+=head2 tty
+
+Corresponds to C<-t>.
+
+=head2 writable()
+
+Corresponds to C<-w>.
 
 =head1 BUGS
 

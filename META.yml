@@ -1,41 +1,14 @@
 ---
-name: File-Find-Object-Rule
-version: 0.0300
+abstract: 'Alternative interface to File::Find::Object'
 author:
-  - |-
-    Richard Clamp <richardc@unixbeard.net> with input gained from this
-    use.perl discussion: http://use.perl.org/~richardc/journal/6467
-  - |-
-    Additional proofreading and input provided by Kake, Greg McCarroll,
-    and Andy Lester andy@petdance.com.
-abstract: Alternative interface to File::Find::Object
-license: perl
-resources:
-  homepage: http://www.shlomifish.org/open-source/projects/File-Find-Object/
-  license: http://dev.perl.org/licenses/
-  repository: http://svn.berlios.de/svnroot/repos/web-cpan/File-Find-Object/
-requires:
-  Carp: 0
-  Class::XSAccessor: 0
-  Cwd: 0
-  File::Basename: 0
-  File::Find::Object: 0.2.1
-  File::Spec: 0
-  Number::Compare: 0
-  Text::Glob: 0
-  strict: 0
-  vars: 0
-  warnings: 0
+  - "Richard Clamp <richardc@unixbeard.net> with input gained from this\nuse.perl discussion: http://use.perl.org/~richardc/journal/6467"
+  - "Additional proofreading and input provided by Kake, Greg McCarroll,\nand Andy Lester andy@petdance.com."
 build_requires:
   Test::More: 0
-provides:
-  File::Find::Object::Rule:
-    file: lib/File/Find/Object/Rule.pm
-    version: 0.0300
-generated_by: Module::Build version 0.33
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+configure_requires:
+  Module::Build: 0.38
+dynamic_config: 1
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.120630'
 keywords:
   - directories
   - directory
@@ -54,3 +27,29 @@ keywords:
   - traversal
   - tree
   - wrapper
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: File-Find-Object-Rule
+provides:
+  File::Find::Object::Rule:
+    file: lib/File/Find/Object/Rule.pm
+    version: 0.0301
+requires:
+  Carp: 0
+  Class::XSAccessor: 0
+  Cwd: 0
+  File::Basename: 0
+  File::Find::Object: 0.002001
+  File::Spec: 0
+  Number::Compare: 0
+  Text::Glob: 0
+  strict: 0
+  vars: 0
+  warnings: 0
+resources:
+  homepage: http://www.shlomifish.org/open-source/projects/File-Find-Object/
+  license: http://dev.perl.org/licenses/
+  repository: http://svn.berlios.de/svnroot/repos/web-cpan/File-Find-Object/
+version: 0.0301

@@ -1,0 +1,80 @@
+{
+   "abstract" : "Alternative interface to File::Find::Object",
+   "author" : [
+      "Richard Clamp <richardc@unixbeard.net> with input gained from this\nuse.perl discussion: http://use.perl.org/~richardc/journal/6467",
+      "Additional proofreading and input provided by Kake, Greg McCarroll,\nand Andy Lester andy@petdance.com."
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.120630",
+   "keywords" : [
+      "directories",
+      "directory",
+      "directory-traversal",
+      "directory-tree",
+      "file",
+      "file-find-rule",
+      "find",
+      "instance",
+      "instantiated",
+      "instantiation",
+      "interface",
+      "iterative",
+      "object",
+      "rule",
+      "traversal",
+      "tree",
+      "wrapper"
+   ],
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "File-Find-Object-Rule",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::More" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.38"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Carp" : "0",
+            "Class::XSAccessor" : "0",
+            "Cwd" : "0",
+            "File::Basename" : "0",
+            "File::Find::Object" : "0.002001",
+            "File::Spec" : "0",
+            "Number::Compare" : "0",
+            "Text::Glob" : "0",
+            "strict" : "0",
+            "vars" : "0",
+            "warnings" : "0"
+         }
+      }
+   },
+   "provides" : {
+      "File::Find::Object::Rule" : {
+         "file" : "lib/File/Find/Object/Rule.pm",
+         "version" : "0.0301"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "homepage" : "http://www.shlomifish.org/open-source/projects/File-Find-Object/",
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ],
+      "repository" : {
+         "url" : "http://svn.berlios.de/svnroot/repos/web-cpan/File-Find-Object/"
+      }
+   },
+   "version" : "0.0301"
+}

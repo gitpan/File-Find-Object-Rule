@@ -1,11 +1,11 @@
 {
    "abstract" : "Alternative interface to File::Find::Object",
    "author" : [
-      "Richard Clamp <richardc@unixbeard.net> with input gained from this\nuse.perl discussion: http://use.perl.org/~richardc/journal/6467",
-      "Additional proofreading and input provided by Kake, Greg McCarroll,\nand Andy Lester andy@petdance.com."
+      "Richard Clamp <richardc@unixbeard.net> with input gained from this",
+      "and Andy Lester andy@petdance.com."
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.120630",
+   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
    "keywords" : [
       "directories",
       "directory",
@@ -41,7 +41,7 @@
       },
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.38"
+            "Module::Build" : "0.36"
          }
       },
       "runtime" : {
@@ -63,7 +63,7 @@
    "provides" : {
       "File::Find::Object::Rule" : {
          "file" : "lib/File/Find/Object/Rule.pm",
-         "version" : "0.0301"
+         "version" : "0.0302"
       }
    },
    "release_status" : "stable",
@@ -73,8 +73,8 @@
          "http://dev.perl.org/licenses/"
       ],
       "repository" : {
-         "url" : "http://svn.berlios.de/svnroot/repos/web-cpan/File-Find-Object/"
+         "url" : "http://bitbucket.org/shlomif/perl-file-find-object-rule"
       }
    },
-   "version" : "0.0301"
+   "version" : "0.0302"
 }

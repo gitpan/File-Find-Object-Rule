@@ -8,7 +8,7 @@ build_requires:
 configure_requires:
   Module::Build: 0.36
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4005, CPAN::Meta::Converter version 2.120921'
+generated_by: 'Module::Build version 0.4007, CPAN::Meta::Converter version 2.132830'
 keywords:
   - directories
   - directory
@@ -35,7 +35,7 @@ name: File-Find-Object-Rule
 provides:
   File::Find::Object::Rule:
     file: lib/File/Find/Object/Rule.pm
-    version: 0.0303
+    version: 0.0304
 requires:
   Carp: 0
   Class::XSAccessor: 0
@@ -45,6 +45,7 @@ requires:
   File::Spec: 0
   Number::Compare: 0
   Text::Glob: 0
+  perl: 5.008
   strict: 0
   vars: 0
   warnings: 0
@@ -52,4 +53,4 @@ resources:
   homepage: http://www.shlomifish.org/open-source/projects/File-Find-Object/
   license: http://dev.perl.org/licenses/
   repository: http://bitbucket.org/shlomif/perl-file-find-object-rule
-version: 0.0303
+version: 0.0304

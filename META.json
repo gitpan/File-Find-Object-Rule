@@ -5,7 +5,7 @@
       "and Andy Lester andy@petdance.com."
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4007, CPAN::Meta::Converter version 2.132830",
+   "generated_by" : "Module::Build version 0.4205",
    "keywords" : [
       "directories",
       "directory",
@@ -64,7 +64,7 @@
    "provides" : {
       "File::Find::Object::Rule" : {
          "file" : "lib/File/Find/Object/Rule.pm",
-         "version" : "0.0304"
+         "version" : "0.0305"
       }
    },
    "release_status" : "stable",
@@ -77,5 +77,5 @@
          "url" : "http://bitbucket.org/shlomif/perl-file-find-object-rule"
       }
    },
-   "version" : "0.0304"
+   "version" : "0.0305"
 }
